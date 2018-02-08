@@ -1,0 +1,39 @@
+{
+  "name": "roll-player-codex",
+  "version": "0.1.0",
+  "description": "Server for running Roll-Player",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roll-player/codex-server.git"
+  },
+  "keywords": [
+    "Roll",
+    "Player",
+    "TTRPG",
+    "RPG",
+    "Server"
+  ],
+  "author": "Michael Sarchet <msarchet@rollplayerapp.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/roll-player/codex-server/issues"
+  },
+  "homepage": "https://github.com/roll-player/codex-server#readme",
+  "dependencies": {
+    "@koa/cors": "2",
+    "apollo-server-koa": "^1.3.2",
+    "graphql": "^0.12.3",
+    "graphql-tools": "^2.14.1",
+    "koa": "^2.4.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-logger": "^3.1.0",
+    "koa-passport": "^4.0.1",
+    "koa-router": "^7.3.0",
+    "lodash": "^4.17.4",
+    "standard": "^10.0.3"
+  }
+}

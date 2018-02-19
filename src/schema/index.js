@@ -1,68 +1,32 @@
 const { makeExecutableSchema } = require('graphql-tools')
-const { find, filter } = require('lodash')
-
-let spells = [
-{
-    id: 123,
-    name: "fireball",
-    description: "Cast fireball",
-    level: 3
-}
-]
-
-let users = [
-
-]
-
-let games = [
-    { name: 'Endaria', description: 'Home Game', id: 1, owner: 'Michael', players: ['Claire, Lauren, Andy, Max']}
-]
-
-let characters = []
-
-let users = []
-
-const generateId = (Math.random() * 1000) | 0 
-const extractUser = ctx => 'Michael'
-
-const getSpells = () => spells 
-const findSpell = id => find(getSpells(), { id })
-const addSpell = ({name, description,level}) => {
-    const newSpell = {
-        id: generateId(),
-        name,
-        description,
-        level,
-    }
-    spells.concat(newSpell)
-    return newSpell
-}
-const getGames = () => games
-const findGame = id => find(getGames(), { id })
-const addGame = ({name, description}, owner) => {
-    const newGame = {
-        id: generateId(),
-        name,
-        description,
-        owner
-    }
-
-    games.push(newGame)
-
-    return newGame
-}
-
-const addPlayerToGame = ({gameId, playerId}) => {
-    const game = findGame(gameId)
-    game.players.push(playerId)
-}
-
-const removePlayerFromGame = ({gameId, playerId}) => {
-    const game = findGame(gameId)
-    game.players = filter(game.players, player => player.id !== playerId)
-}
+const {
+    addGame,
+    findGame,
+    getGames,
+    addSpell,
+    findSpell,
+    getSpells,
+    removePlayerFromGame,
+    addPlayerToGame,
+    addCharacter,
+    removeCharacter
+} = require('../data')
 
 const typeDefs = `
+    enum ACTION_COST {
+        REACTION,
+        ACTION,
+        BONUS_ACTION,
+        MOVEMENT,
+        NONE
+    }
+    
+    interface Entity {
+        id: ID!,
+        name: String,
+        description: String
+    }
+
     type Query { 
         spells: [Spell]
         spell (id: Int!): Spell
@@ -70,39 +34,54 @@ const typeDefs = `
         table (id: Int!): Game
     }
 
-    type Game {
+    type Game implements Entity {
         id: ID!,
         name: String!,
         description: String!,
         owner: String!,
         players: [String]
     }
+    
+    scalar RollMod
 
-    type CharacterStat {
-        id: ID!,
-        name: String!,
+    type Damage {
+        roll: String,
+        damageType: String,
+        modifier: RollMod
+    }
+
+    type CharacterStat implements Entity {
         value: Int
     }
 
-    type CharacterDescriptor {
-        id: ID!,
-        name: String!,
-        value: String
+    type CharacterDescriptor implements Entity {
     }
 
-    type CharacterAction {
-        id: ID!,
-        cost: 
-    }
-    type CharacterClass {
-        id: ID!,
-        name: string
+    type CharacterAction implements Entity {
+        cost: ACTION_COST,
     }
 
-    type Character {
-        id: ID!,
-        name: String!,
+    type CharacterClass implements Entity {
+    }
+
+    type Character implements Entity {
         class: String!,
+    }
+
+    type Weapon implements Entity {
+        damage: Damage
+    }
+
+    type CharacterDetails {
+        name: String!,
+        stats: [CharacterStat],
+        descriptors: [CharacterDescriptor],
+        class: CharacterClass,
+        actions: [CharacterAction],
+        level: Int,
+        Spells: [Spell],
+        Weapon: [Weapon],
+        Items: [Items]
     }
 
     type Mutation {
@@ -112,14 +91,29 @@ const typeDefs = `
             level: Int!
         ): Spell
 
-        createGame (
+        addGame (
             name: String!,
             description: String!
         ): Game
 
-        createCharacter (
+        addPlayerToGame (
+            gameId: ID!,
+            playerId: ID!
+        ): Game
+
+        removePlayerFromGame (
+            gameId: ID!,
+            playerId: ID!
+        ): Game
+
+        addCharacter (
             ownerId: ID!
-            name: String!
+            details: CharacterDetails!
+        ): Character
+
+        removeCharacter (
+            ownerId: ID!,
+            characterId: !ID
         ): Character
     }
 
@@ -127,7 +121,8 @@ const typeDefs = `
         id: ID,
         name: String, 
         description: String, 
-        level: Int 
+        level: Int,
+        damage: Damage
     }
 `
 
@@ -140,7 +135,11 @@ const resolvers = {
     },
     Mutation: {
         addSpell: (root, args, ctx) => addSpell(args),
-        createGame: (root, args, ctx) => addGame(args, extractUser(ctx))
+        createGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
+        addPlayerToGame: (root, args, ctx) => addPlayerToGame(args, extractUser(ctx)),
+        removePlayerFromGame: (root, args, ctx) => removePlayerFromGame(args, extractUser(ctx)),
+        addCharacter: (root, args, ctx) => addCharacter(args, extractUser(ctx)),
+        removeCharacter: (root, args, ctx) => removeCharacter(args, extractUser(ctx))
     }
 }
 

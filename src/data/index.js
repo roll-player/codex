@@ -9,12 +9,7 @@ let spells = [
 }
 ]
 
-let users = [
-
-]
-
 let games = [
-    { name: 'Endaria', description: 'Home Game', id: 1, owner: 'Michael', players: ['Claire, Lauren, Andy, Max']}
 ]
 
 let characters = []
@@ -23,6 +18,8 @@ let users = []
 
 const generateId = (Math.random() * 1000) | 0 
 const extractUser = ctx => 'Michael'
+
+const createUser = (user) => users.push(user)
 
 const getSpells = () => spells 
 const findSpell = id => find(getSpells(), { id })
@@ -42,9 +39,9 @@ const findGame = id => find(getGames(), { id })
 const addGame = ({name, description}, owner) => {
     const newGame = {
         id: generateId(),
+        ownerId: owner.id,
         name,
-        description,
-        owner
+        description
     }
 
     games.push(newGame)
@@ -69,21 +66,21 @@ const removePlayerFromGame = ({gameId, playerId}, user) => {
 }
 
 const addCharacter = ({details}, user) => {
-    const user = findUser(user)
+    const owner = findUser(user)
 
-    if(user) {
+    if (owner) {
         details.id = generateId()
-        user.characters.push(details)
+        owner.characters.push(details)
     }
 
     return details
 }
 
 const removeCharacter = ({characterId}, user) => {
-    const user = findUser(user)
+    const owner = findUser(user)
 
-    if (user) {
-        const removed = remove(user.character, {id: characterId})
+    if (owner) {
+        const removed = remove(owner.character, {id: characterId})
         return removed
     }
 

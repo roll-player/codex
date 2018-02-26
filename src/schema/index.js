@@ -42,12 +42,18 @@ const typeDefs = `
         players: [String]
     }
     
-    scalar RollMod
-
     type Damage {
         roll: String,
         damageType: String,
-        modifier: RollMod
+        modifier: Int
+    }
+
+    type Money {
+        platinum: Int,
+        gold: Int,
+        electrum: Int,
+        silver: Int,
+        copper: Int
     }
 
     type CharacterStat implements Entity {
@@ -55,21 +61,31 @@ const typeDefs = `
     }
 
     type CharacterDescriptor implements Entity {
+        extra: String
     }
 
     type CharacterAction implements Entity {
-        cost: ACTION_COST,
+        cost: ACTION_COST
     }
 
     type CharacterClass implements Entity {
+        abilities: [String]
     }
 
     type Character implements Entity {
-        class: String!,
+        class: String!
     }
 
     type Weapon implements Entity {
         damage: Damage
+    }
+
+    type Item implements Entity {
+        weight: Int,
+        value: Money,
+        requiresAttunement: Boolean,
+        requiresAttunementBy: [String],
+        Charges: Int
     }
 
     type CharacterDetails {
@@ -81,13 +97,13 @@ const typeDefs = `
         level: Int,
         Spells: [Spell],
         Weapon: [Weapon],
-        Items: [Items]
+        Items: [Item]
     }
 
     type Mutation {
         addSpell (
-            name: String!
-            description: String!
+            name: String!,
+            description: String!,
             level: Int!
         ): Spell
 
@@ -107,13 +123,13 @@ const typeDefs = `
         ): Game
 
         addCharacter (
-            ownerId: ID!
+            ownerId: ID!,
             details: CharacterDetails!
         ): Character
 
         removeCharacter (
             ownerId: ID!,
-            characterId: !ID
+            characterId: ID!
         ): Character
     }
 
@@ -135,7 +151,7 @@ const resolvers = {
     },
     Mutation: {
         addSpell: (root, args, ctx) => addSpell(args),
-        createGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
+        addGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
         addPlayerToGame: (root, args, ctx) => addPlayerToGame(args, extractUser(ctx)),
         removePlayerFromGame: (root, args, ctx) => removePlayerFromGame(args, extractUser(ctx)),
         addCharacter: (root, args, ctx) => addCharacter(args, extractUser(ctx)),

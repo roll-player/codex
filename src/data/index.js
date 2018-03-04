@@ -1,37 +1,54 @@
-const { find, filter } = require('lodash')
+const MongoClient = require('mongodb').MongoClient
+const dbName = 'rollplayer'
 
-let spells = [
-{
-    id: 123,
-    name: "fireball",
-    description: "Cast fireball",
-    level: 3
-}
-]
-
-let games = [
-]
-
-let characters = []
-
-let users = []
-
-const generateId = (Math.random() * 1000) | 0 
 const extractUser = ctx => 'Michael'
 
-const createUser = (user) => users.push(user)
+const dbClient = MongoClient.connect("mongodb://localhost:27017", {poolSize: 10})
+    .then(client => client.db(dbName))
+    .catch(err => console.error(err))
 
-const getSpells = () => spells 
-const findSpell = id => find(getSpells(), { id })
+const addUser = userdata => {
+    return new Promise((resolve, reject) => {
+        dbClient.then(db => {
+            db.collection('Users')
+            
+            collection.insertOne(userdata, (err, result) => {
+                if (err) {
+                    return reject(err)
+                }
+
+                return resolve(result)
+            }) 
+        }).catch(reject)
+    })
+}
+
+const findUser = id => {
+    return dbClient.then(db => {
+        const collection = db.collection('Users')
+        return collection.find({ id }).toArray()
+    }).catch(reject)
+}
+
+const allSpells = () => {
+    return dbClient.then(db => {
+        const collection = db.collection('Spells')
+        return collection.find({}).toArray()
+    })
+}
+
 const addSpell = ({name, description,level}) => {
-    const newSpell = {
-        id: generateId(),
-        name,
-        description,
-        level,
-    }
-    spells.concat(newSpell)
-    return newSpell
+    return dbClient.then(db => {
+        const collection = db.collection('spells')
+        return collection.insertOne({name, description, level})
+    })
+}
+
+const findSpell = name => {
+    return dbClient.then(db => {
+        const collection = db.collection('spells')
+        collection.find({name}).toArray()
+    })
 }
 
 const getGames = () => games
@@ -88,7 +105,7 @@ const removeCharacter = ({characterId}, user) => {
 }
 
 module.exports = {
-    getSpells,
+    getSpells: allSpells,
     findSpell,
     addSpell,
     getGames,

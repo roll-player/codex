@@ -5,6 +5,7 @@ const { graphqlKoa } = require('apollo-server-koa')
 const logger = require('koa-logger')
 const cors = require('@koa/cors')
 const jwt = require('koa-jwt')
+const { koaJwtSecret } = require('jwks-rsa')
 
 const graphSchema = require('./schema')
 const app = new koa()
@@ -15,7 +16,26 @@ app.use(cors())
 app.use(koaBody())
 app.use(logger())
 
-app.use(jwt({ secret: process.env.AUTH0_SECRET }))
+console.log(process.env.AUTH0_SECRET)
+
+app.use(function(ctx, next){
+    return next().catch((err) => {
+      if (401 == err.status) {
+        console.log("401", err)
+        ctx.status = 401;
+        ctx.body = 'Protected resource, use Authorization header to get access\n';
+      } else {
+        throw err;
+      }
+    });
+  });
+
+app.use(jwt({ secret: koaJwtSecret({
+        jwksUri: 'https://roll-player-dev.auth0.com/.well-known/jwks.json',
+        cache: true,
+        cacheMaxEntries: 5,
+        cacheMaxAge: 10 * 60 * 60 * 1000
+}), algorithms: ['RS256'] }))
 
 router.post('/graphql', graphqlKoa({ schema: graphSchema }))
 router.get('/graphql', graphqlKoa({ schema: graphSchema }))

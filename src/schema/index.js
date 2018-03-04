@@ -27,11 +27,12 @@ const typeDefs = `
         description: String
     }
 
-    type Query { 
-        spells: [Spell]
-        spell (id: Int!): Spell
-        games: [Game],
-        table (id: Int!): Game
+    type Resource {
+        id: ID!,
+        name: String!,
+        url: String!,
+        type: String!,
+        tags: [String]
     }
 
     type Game implements Entity {
@@ -57,30 +58,44 @@ const typeDefs = `
     }
 
     type CharacterStat implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         value: Int
     }
 
     type CharacterDescriptor implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         extra: String
     }
 
     type CharacterAction implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         cost: ACTION_COST
     }
 
     type CharacterClass implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         abilities: [String]
     }
 
-    type Character implements Entity {
-        class: String!
-    }
-
     type Weapon implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         damage: Damage
     }
 
     type Item implements Entity {
+        id: ID!,
+        name: String,
+        description: String,
         weight: Int,
         value: Money,
         requiresAttunement: Boolean,
@@ -88,7 +103,12 @@ const typeDefs = `
         Charges: Int
     }
 
-    type CharacterDetails {
+    input CharacterDetailsInput {
+        name: String!
+    }
+
+    type Character {
+        id: ID!,
         name: String!,
         stats: [CharacterStat],
         descriptors: [CharacterDescriptor],
@@ -100,6 +120,14 @@ const typeDefs = `
         Items: [Item]
     }
 
+    type Spell implements Entity { 
+        id: ID!,
+        name: String,
+        description: String,
+        level: Int,
+        damage: Damage
+    }
+
     type Mutation {
         addSpell (
             name: String!,
@@ -107,10 +135,36 @@ const typeDefs = `
             level: Int!
         ): Spell
 
+        updateSpell (
+            id: ID!,
+            name: String!,
+            description: String!,
+            level: Int!
+        ): Spell
+
+        deleteSpell (
+            id: ID!
+        ): Spell
+
         addGame (
             name: String!,
             description: String!
         ): Game
+
+        addResource (
+            name: String!,
+            type: String!,
+            url: String!,
+            tags: [String]
+        ): Resource
+
+        updateResource (
+            id: ID!,
+            name: String!,
+            type: String!,
+            url: String!,
+            tags: [String]
+        ): Resource
 
         addPlayerToGame (
             gameId: ID!,
@@ -122,23 +176,41 @@ const typeDefs = `
             playerId: ID!
         ): Game
 
+        addCharacterToPlayer (
+            gameId: ID!,
+            playerId: ID!,
+            characterId: ID!
+        ): Character
+
+        removeCharacterFromPlayer(
+            gameId: ID!,
+            playerId: ID!,
+            characterId: ID!
+        ): Character
+
         addCharacter (
-            ownerId: ID!,
-            details: CharacterDetails!
+            details: CharacterDetailsInput!
+        ): Character
+
+        updateCharacter (
+            id: ID!,
+            details: CharacterDetailsInput!
         ): Character
 
         removeCharacter (
-            ownerId: ID!,
-            characterId: ID!
+            id: ID!,
         ): Character
+
+        # addUser (
+        #     authBits: String!
+        # ): User
     }
 
-    type Spell { 
-        id: ID,
-        name: String, 
-        description: String, 
-        level: Int,
-        damage: Damage
+    type Query { 
+        spells: [Spell]
+        spell (id: Int!): Spell
+        games: [Game],
+        table (id: Int!): Game
     }
 `
 
@@ -150,7 +222,13 @@ const resolvers = {
         table: (root, { id }, ctx) => findGame(id)
     },
     Mutation: {
-        addSpell: (root, args, ctx) => addSpell(args),
+        addSpell: (root, args, ctx) => addSpell(args).then(result => { 
+            let spell = result.ops[0]
+            spell.id = spell._id
+            delete spell._id
+            return spell
+        }),
+        updateSpell: (root, args, ctx) => updateSpell(args),
         addGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
         addPlayerToGame: (root, args, ctx) => addPlayerToGame(args, extractUser(ctx)),
         removePlayerFromGame: (root, args, ctx) => removePlayerFromGame(args, extractUser(ctx)),

@@ -31,7 +31,7 @@ app.use(function(ctx, next){
   });
 
 app.use(jwt({ secret: koaJwtSecret({
-        jwksUri: 'https://roll-player-dev.auth0.com/.well-known/jwks.json',
+        jwksUri: process.env.ROLL_PLAYER_JWKS_URI,
         cache: true,
         cacheMaxEntries: 5,
         cacheMaxAge: 10 * 60 * 60 * 1000

@@ -146,6 +146,10 @@ const typeDefs = `
             id: ID!
         ): Spell
 
+        findSpell (
+            search: String!
+        ): [Spell]
+
         addGame (
             name: String!,
             description: String!
@@ -214,6 +218,14 @@ const typeDefs = `
     }
 `
 
+const convertId = obj => {
+    obj.id = obj._id
+    delete obj._id
+    return obj
+}
+
+const getFirst = result => result.ops[0]
+
 const resolvers = {
     Query: {
         spells: () => getSpells(),
@@ -222,13 +234,9 @@ const resolvers = {
         table: (root, { id }, ctx) => findGame(id)
     },
     Mutation: {
-        addSpell: (root, args, ctx) => addSpell(args).then(result => { 
-            let spell = result.ops[0]
-            spell.id = spell._id
-            delete spell._id
-            return spell
-        }),
-        updateSpell: (root, args, ctx) => updateSpell(args),
+        addSpell: (root, args, ctx) => addSpell(args).then(result => convertId(getFirst(result))),
+        updateSpell: (root, args, ctx) => updateSpell(args).then(result => convertId(getFirst(result))),
+        findSpell: (root, args, ctx) => findSpell(args).then(result => result.ops.map(convertId)),
         addGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
         addPlayerToGame: (root, args, ctx) => addPlayerToGame(args, extractUser(ctx)),
         removePlayerFromGame: (root, args, ctx) => removePlayerFromGame(args, extractUser(ctx)),

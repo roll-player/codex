@@ -25,15 +25,22 @@ const addUser = userdata => {
 
 const findUser = id => {
     return dbClient.then(db => {
-        const collection = db.collection('Users')
+        const collection = db.collection('users')
         return collection.find({ id }).toArray()
     }).catch(reject)
 }
 
 const allSpells = () => {
     return dbClient.then(db => {
-        const collection = db.collection('Spells')
+        const collection = db.collection('spells')
         return collection.find({}).toArray()
+    })
+}
+
+const updateSpell = ({ id, name, description, level }) => {
+    return dbClient.then(db => {
+        const collection = db.collection('spells')
+        return collection.updateOne({ id }, { $set : { name, description, level } })
     })
 }
 
@@ -51,20 +58,21 @@ const findSpell = name => {
     })
 }
 
-const getGames = () => games
-const findGame = id => find(getGames(), { id })
 const addGame = ({name, description}, owner) => {
-    const newGame = {
-        id: generateId(),
-        ownerId: owner.id,
-        name,
-        description
-    }
-
-    games.push(newGame)
-
-    return newGame
+    return dbClient.then(db => {
+        const collection = db.collection('games')
+        return collection.inertOne({name, description, ownerId: owner.id})
+    })
 }
+
+const getGames = () => {
+    return dbClient.then(db => {
+        const collection = db.collection('games')
+        return collection.find({}).toArray()
+    })
+}
+
+const findGame = id => find(getGames(), { id })
 
 const addPlayerToGame = ({gameId, playerId}, user) => {
     const game = findGame(gameId)

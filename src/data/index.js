@@ -61,7 +61,7 @@ const findSpell = name => {
 const addGame = ({name, description}, owner) => {
     return dbClient.then(db => {
         const collection = db.collection('games')
-        return collection.inertOne({name, description, ownerId: owner.id})
+        return collection.inertOne({name, description, ownerId: owner.id, players: [ owner.id ]})
     })
 }
 
@@ -72,14 +72,26 @@ const getGames = () => {
     })
 }
 
-const findGame = id => find(getGames(), { id })
+const findGame = params => {
+    return dbClient.then(db => {
+        const collection = db.collection('games')
+        return collection.find({ ...params }).toArray()
+    })
+}
 
 const addPlayerToGame = ({gameId, playerId}, user) => {
-    const game = findGame(gameId)
-
-    if(game.owner === user) {
-        game.players.push(playerId)
-    }
+    return dbClient.then(db => {
+        const collection = db.collection('games')
+        return collection.update(
+            {
+                gameId,
+                ownerId: user.id
+            },
+            {
+                $push: { users: playerId }
+            }
+        )
+    })
 }
 
 const removePlayerFromGame = ({gameId, playerId}, user) => {

@@ -218,13 +218,6 @@ const typeDefs = `
     }
 `
 
-const convertId = obj => {
-    obj.id = obj._id
-    delete obj._id
-    return obj
-}
-
-const getFirst = result => result.ops[0]
 
 const resolvers = {
     Query: {
@@ -234,9 +227,9 @@ const resolvers = {
         table: (root, { id }, ctx) => findGame(id)
     },
     Mutation: {
-        addSpell: (root, args, ctx) => addSpell(args).then(result => convertId(getFirst(result))),
-        updateSpell: (root, args, ctx) => updateSpell(args).then(result => convertId(getFirst(result))),
-        findSpell: (root, args, ctx) => findSpell(args).then(result => result.ops.map(convertId)),
+        addSpell: (root, args, ctx) => addSpell(args),
+        updateSpell: (root, args, ctx) => updateSpell(args),
+        findSpell: (root, args, ctx) => findSpell(args),
         addGame: (root, args, ctx) => addGame(args, extractUser(ctx)),
         addPlayerToGame: (root, args, ctx) => addPlayerToGame(args, extractUser(ctx)),
         removePlayerFromGame: (root, args, ctx) => removePlayerFromGame(args, extractUser(ctx)),

@@ -1,7 +1,15 @@
 const MongoClient = require('mongodb').MongoClient
 const dbName = 'rollplayer'
 
-const extractUser = ctx => 'Michael'
+const extractUserId = user => user.sub
+
+const convertId = obj => {
+    obj.id = obj._id
+    delete obj._id
+    return obj
+}
+
+const getFirst = result => result.ops[0]
 
 const dbClient = MongoClient.connect("mongodb://localhost:27017", {poolSize: 10})
     .then(client => client.db(dbName))
@@ -58,10 +66,12 @@ const findSpell = name => {
     })
 }
 
-const addGame = ({name, description}, owner) => {
+const addGame = ({name, description}, user) => {
+    const ownerId = extractUserId(user)
+
     return dbClient.then(db => {
         const collection = db.collection('games')
-        return collection.inertOne({name, description, ownerId: owner.id, players: [ owner.id ]})
+        return collection.inertOne({name, description, ownerId, players: [ ownerId ]})
     })
 }
 
@@ -75,7 +85,7 @@ const getGames = () => {
 const findGame = params => {
     return dbClient.then(db => {
         const collection = db.collection('games')
-        return collection.find({ ...params }).toArray()
+        return collection.find(params).toArray()
     })
 }
 
@@ -85,7 +95,7 @@ const addPlayerToGame = ({gameId, playerId}, user) => {
         return collection.update(
             {
                 gameId,
-                ownerId: user.id
+                ownerId: extractUserId(user)
             },
             {
                 $push: { users: playerId }
@@ -95,11 +105,18 @@ const addPlayerToGame = ({gameId, playerId}, user) => {
 }
 
 const removePlayerFromGame = ({gameId, playerId}, user) => {
-    const game = findGame(gameId)
-
-    if (game.owner === user) {
-        game.players = filter(game.players, player => player.id !== playerId)
-    }
+    return dbClient.then(db => {
+        const collection = db.collection('games')
+        return collection.update(
+            {
+                gameId,
+                owerId: extractUserId(user)
+            },
+            {
+                $pull: { users: playerId }
+            }
+        )
+    })
 }
 
 const addCharacter = ({details}, user) => {
